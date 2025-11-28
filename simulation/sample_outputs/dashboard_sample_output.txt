@@ -1,0 +1,21 @@
+=================== DELIVERY ANALYTICS REPORT ===================
+
+Total Deliveries: 50
+Average Travel Time: 21.40 mins
+Average Delay: 4.94 mins
+Delay Rate: 30.0%
+
+Busiest Route: industrial (14 deliveries)
+
+Fastest Delivery: ID 2 (travel time 6.07 mins)
+Slowest Delivery: ID 1 (travel time 50.70 mins)
+
+Driver Performance (Avg Travel Time):
+• Driver 1: 24.56 mins
+• Driver 2: 15.32 mins
+• Driver 3: 23.54 mins
+• Driver 4: 22.82 mins
+• Driver 5: 16.62 mins
+
+
+=================================================================

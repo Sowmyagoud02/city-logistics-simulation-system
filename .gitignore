@@ -1,10 +1,27 @@
-# Python cache files
+/simulation/data/*.db
+
+# Python cache
 __pycache__/
 *.pyc
 
-# VS Code settings
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE files
 .vscode/
+.idea/
 
 # OS files
 .DS_Store
 Thumbs.db
+
+# Databases
+*.sqlite
+*.db
+
+# Experiments or scratch files
+experiments/
+tests/
+scratch.py
