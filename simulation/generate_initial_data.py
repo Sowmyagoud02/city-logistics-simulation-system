@@ -1,3 +1,14 @@
+"""
+Manual database seeding script.
+
+Use this ONLY for:
+- Local development
+- Resetting the database
+- Demo preparation
+
+Not used in production deployment.
+"""
+
 from engine import SimulationEngine
 import os
 

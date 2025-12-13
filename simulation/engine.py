@@ -118,6 +118,7 @@ class SimulationEngine:
 # ---------------------------------------------------------
 # Single delivery function (used by API)
 
+
 def generate_single_delivery():
     """Generate EXACTLY one new delivery and insert it fresh into DB."""
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -159,6 +160,7 @@ def generate_single_delivery():
     conn.close()
 
     return new_delivery
+
 
 def generate_batch_deliveries(count: int):
     """Generate multiple deliveries and save them to DB using global engine."""
@@ -202,6 +204,48 @@ def generate_batch_deliveries(count: int):
 
     return new_deliveries
 
+
+def ensure_initial_data():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(base_dir, "data", "deliveries.db")
+
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # Ensure table exists
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS deliveries(
+            delivery_id INTEGER PRIMARY KEY,
+            driver_id INTEGER,
+            route_type TEXT,
+            distance REAL,
+            start_time REAL,
+            travel_time_minutes REAL,
+            delay_minutes REAL,
+            delay_reason TEXT,
+            end_time REAL
+        )
+    """)
+
+    cursor.execute("SELECT COUNT(*) FROM deliveries")
+    count = cursor.fetchone()[0]
+
+    conn.close()
+
+    if count == 0:
+        print("🔄 No deliveries found. Seeding initial data...")
+
+        engine = SimulationEngine()
+        engine.create_drivers()
+
+        for _ in range(50):
+            engine.assign_delivery()
+
+        engine.export_to_sql(db_path)
+
+        print("Initial 50 deliveries seeded.")
 
 # Global shared engine instance
 global_engine = SimulationEngine()
