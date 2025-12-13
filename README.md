@@ -1,156 +1,202 @@
 # 🚚 City Logistics Simulation System
-### A Python-Based Discrete-Event Simulation for Urban Delivery Networks
 
-This project simulates a real-world last-mile delivery network (like **Amazon, DHL, FedEx**).
-It generates delivery events, logs delays, computes analytics, stores data in SQLite, and visualizes insights through dashboards.
+**A Full-Stack Simulation & Analytics Platform for Last-Mile Delivery
+Networks**
 
----
+This project models a **real-world last-mile logistics system** (similar
+to Amazon, DHL, FedEx) using **Discrete-Event Simulation (DES)**.\
+It generates realistic delivery events, captures delays, stores data in
+a database, exposes analytics via a REST API, and visualizes insights
+through an interactive dashboard.
 
-## ⭐ Features (What This Project Can Do)
+Built end-to-end to demonstrate **simulation engineering, backend
+development, data analytics, and cloud deployment skills**.
 
-✔ Simulates 50+ deliveries with **drivers, routes, delays, timings & distances**  
-✔ Randomized realistic logistics behavior  
-✔ Stores results in **SQLite database**  
-✔ Generates **CSV and SQL** exports  
-✔ Computes powerful analytics:  
-- Average delay  
-- Busiest route  
-- Fastest delivery  
-- Slowest delivery  
-✔ Creates clear **Matplotlib dashboards**  
-✔ Modular architecture: engine, entities, analytics, dashboards  
-✔ Extensible: **Streamlit UI, FastAPI, Docker, Cloud deployment**
+------------------------------------------------------------------------
 
----
+## ⭐ Key Features
+
+✔ Simulates **50+ realistic deliveries** with drivers, routes, delays,
+timing & distances\
+✔ Probabilistic modeling of **traffic, breaks, weather & roadblocks**\
+✔ Stores simulation output in **SQLite database**\
+✔ Computes rich analytics: - Average travel time\
+- Average delay\
+- Delay rate (%)\
+- Busiest route\
+- Fastest & slowest deliveries\
+- Driver performance metrics
+
+✔ **REST API (FastAPI)** to query & mutate simulation data\
+✔ **Streamlit dashboard** connected to live API data\
+✔ Interactive filtering, visualization & data downloads\
+✔ **Docker-ready** for cloud deployment\
+✔ Clean, modular & extensible architecture
+
+------------------------------------------------------------------------
 
 ## 🧱 Project Architecture
-
 ```
-city-logistics-simulation-system/
-│
-├── simulation/
-│   ├── engine.py                 # Simulation engine (DES)
-│   ├── driver.py                 # Driver entity
-│   ├── delivery.py               # Delivery entity
-│   ├── analytics.py              # SQL analytics functions
-│   ├── analytics_dashboard.py    # Console analytics dashboard
-│   ├── dashboard.py              # Matplotlib multi-plot dashboard
-│   ├── data/                     # SQLite DB here
-│   ├── experiments/              # Earlier visualization tests
-│   └── sample_outputs/           # Saved graphs & reports
-│
-├── README.md
-└── requirements.txt
+    city-logistics-simulation-system/
+    │
+    ├── simulation/
+    │   ├── engine.py
+    │   ├── driver.py
+    │   ├── delivery.py
+    │   ├── generate_initial.py
+    │   │
+    │   ├── api/
+    │   │   ├── main.py
+    │   │   ├── routes/
+    │   │   ├── models/
+    │   │   └── utils/
+    │   │
+    │   ├── data/
+    │   │   └── deliveries.db
+    │
+    ├── streamlit_app/
+    │   ├── app.py
+    │   └── api_client/
+    │
+    ├── Dockerfile.api
+    ├── Dockerfile.streamlit
+    ├── requirements.txt
+    ├── README.md
 ```
+------------------------------------------------------------------------
 
----
+## 🧪 Simulation Overview (Discrete-Event Simulation)
 
-## 🧪 Simulation Overview (DES — Discrete Event Simulation)
+The system advances **event-to-event** instead of second-by-second,
+making it efficient and realistic.
 
-The simulation runs through four main events:
+  Event                Description
+  -------------------- -------------------------------------
+  Delivery Assigned    Driver & route selected
+  Delivery Started     Travel begins
+  Delay Event          Traffic / break / weather may occur
+  Delivery Completed   End time logged & stored
 
-| Event                | Meaning                                     |
-|----------------------|---------------------------------------------|
-| **DeliveryAssigned** | Delivery generated, driver selected         |
-| **DeliveryStarted**  | Travel begins                               |
-| **DelayEvent**       | Weather/Traffic/Break causes delay          |
-| **DeliveryCompleted**| Delivery ends & logs are stored             |
-
-Time jumps **event-to-event**, not every second — making the simulation fast and realistic.
-
----
+------------------------------------------------------------------------
 
 ## 📊 Analytics Generated
 
-✔ Average Travel Time  
-✔ Average Delay  
-✔ Delay Rate (%)  
-✔ Busiest Route  
-✔ Fastest Delivery  
-✔ Slowest Delivery  
-✔ Driver Performance Table  
+✔ Average Travel Time\
+✔ Average Delay\
+✔ Delay Rate (%)\
+✔ Busiest Route\
+✔ Fastest Delivery\
+✔ Slowest Delivery\
+✔ Driver Performance Table
 
----
+All analytics are exposed via **FastAPI endpoints** and consumed by the
+frontend.
 
-## 📈 Visualization Dashboard
+------------------------------------------------------------------------
 
-The `dashboard.py` script generates:
+## 📈 Visualization Dashboard (Streamlit)
 
-- **Histogram** → Travel time distribution  
-- **Bar Chart** → Delay frequency  
-- **Pie Chart** → Route distribution  
-- **Scatter Plot** → Distance vs. travel time  
+The Streamlit UI provides:
 
-All plots are automatically saved to:
+-   Travel time distribution (histogram)
+-   Delay reason frequency (bar chart)
+-   Route distribution insights
+-   Driver performance comparison
+-   Filter deliveries by:
+    -   Driver ID
+    -   Route type
+    -   Travel time range
+-   Export data as **CSV / Excel / JSON**
+-   Trigger **new delivery simulation via API**
 
-```
-simulation/sample_outputs/
-```
-
----
+------------------------------------------------------------------------
 
 ## 🗄 Data Storage
 
-Data is stored in:
+All deliveries are stored in:
 
-```
-simulation/data/deliveries.db
-```
+    simulation/data/deliveries.db
 
-SQLite keeps the project lightweight, portable, and ideal for analytics workflows.
+SQLite keeps the system lightweight, portable, and ideal for
+analytics-driven workflows.
 
----
+------------------------------------------------------------------------
 
-## ▶️ How to Run the Project
+## ▶️ How to Run Locally
 
-### **1. Clone the repository**
-```bash
+### 1️⃣ Clone the repository
+
+``` bash
 git clone https://github.com/Sowmyagoud02/city-logistics-simulation-system.git
-cd city-logistics-simulation-system/simulation
+cd city-logistics-simulation-system
 ```
 
-### **2. Run the simulation & populate the database**
-```bash
-python engine.py
+### 2️⃣ Create initial simulation data
+
+``` bash
+python simulation/generate_initial.py
 ```
 
-### **3. Run analytics**
-```bash
-python analytics_dashboard.py
+### 3️⃣ Start the API
+
+``` bash
+uvicorn simulation.api.main:app --reload
 ```
 
-### **4. Generate visualization dashboard**
-```bash
-python dashboard.py
+### 4️⃣ Start Streamlit UI
+
+``` bash
+streamlit run streamlit_app/app.py
 ```
 
----
+Open:
+
+API Docs → http://127.0.0.1:8000/docs\
+Streamlit UI → http://localhost:8501
+
+------------------------------------------------------------------------
 
 ## 🧩 Tech Stack
 
-| Category          | Tools                           |
-|------------------|----------------------------------|
-| Language          | Python                          |
-| Simulation Method | DES (Discrete-Event Simulation) |
-| Database          | SQLite                          |
-| Visualization     | Matplotlib                      |
-| Data Export       | CSV + SQL                       |
-| Future Extensions | Streamlit, FastAPI, Docker      |
+  Category        Tools
+  --------------- ---------------------------
+  Language        Python
+  Simulation      Discrete-Event Simulation
+  Backend         FastAPI
+  Frontend        Streamlit
+  Database        SQLite
+  Visualization   Matplotlib
+  API Models      Pydantic
+  Deployment      Docker, Render
+  Data Export     CSV, Excel, JSON
 
----
+------------------------------------------------------------------------
 
-## 🚀 Future Roadmap
+## 🚀 Deployment
 
-- Phase 6: Streamlit Web App  
-- Phase 7: REST API (FastAPI)  
-- Phase 8: Dockerize Simulation  
-- Phase 9: Deploy Dashboard Online  
-- Phase 10: Add ML-based Delivery Time Predictions  
+-   Backend and frontend are Dockerized\
+-   Designed for deployment on Render / Railway / Azure\
+-   Cloud URLs will be added after deployment
 
----
+------------------------------------------------------------------------
+
+## 🔮 Future Enhancements
+
+-   PostgreSQL database\
+-   Authentication & user roles\
+-   Time-series analytics\
+-   Real-time simulation controls\
+-   ML-based delivery time prediction\
+-   Event streaming with Kafka
+
+------------------------------------------------------------------------
 
 ## 👤 Author
 
-**Talla Sowmya Goud**  
-Master’s in Digital Engineering, OVGU Magdeburg  
-Specializing in **Simulation • Data Engineering • Cloud • Python**
+**Talla Sowmya Goud**\
+Master's in Digital Engineering --- OVGU Magdeburg
+
+**Focus Areas:** - Simulation Engineering\
+- Backend & API Development\
+- Data Engineering\
+- Cloud Deployment
