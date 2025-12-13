@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic
+requests
+streamlit
+pandas
+matplotlib
+xlsxwriter
+python-multipart

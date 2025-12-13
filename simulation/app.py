@@ -1,108 +1,228 @@
-import os
-import sqlite3
 import streamlit as st
 import pandas as pd
 import io
-from dashboard import *
-from analytics import *
+
+# <-- NEW: All data comes from the API now
+from api_client.client import (
+    get_summary,
+    get_all_deliveries,
+    get_delivery_by_id,
+    get_deliveries_by_driver,
+    simulate_new_delivery,
+    filter_deliveries,
+    simulate_batch
+)
 
 st.title("City Logistics Simulation Dashboard")
-page = st.sidebar.selectbox("Navigation", ["Home", "Analytics Summary", "Visualizations", "Raw Data"])
+page = st.sidebar.selectbox("Navigation", ["Home", "Analytics Summary", "Visualizations", "Raw Data", "Simulate Delivery", "Filters","Batch Simulation"])
 
-#home
+# -----------------------------
+# HOME PAGE
+# -----------------------------
 if page == "Home":
     st.header("📦 Welcome to the City Logistics Simulation System")
 
     st.write("""
-    This dashboard is part of a complete end-to-end simulation project that models a real-world  
-    last-mile logistics network (like Amazon, DHL, FedEx).  
-    Explore delivery performance, delays, routes, and driver behavior with interactive analytics.
+    This dashboard is powered by a real API connected to a discrete-event simulation.
+    Explore performance, delays, routes, and driver statistics generated dynamically.
     """)
 
     st.subheader("✨ What You Can Do Here")
     st.markdown("""
-    - View high-level analytics (average delay, busiest route, fastest delivery, etc.)
-    - Explore interactive visualizations of simulation data  
-    - Inspect the raw SQLite delivery logs  
-    - Understand system performance through multiple metrics
+    - View high-level analytics  
+    - Explore interactive visualizations  
+    - Inspect the raw delivery logs  
+    - Trigger new delivery simulations  
     """)
 
-    st.subheader("🧭 How to Navigate")
-    st.markdown("""
-    Use the sidebar to switch between:
-    - **Analytics Summary** → Key metrics  
-    - **Visualizations** → Graphs & plots  
-    - **Raw Data** → Full delivery table  
-    """)
+    st.info("The dashboard communicates with the FastAPI backend using API calls.")
 
-    st.info("This dashboard uses data generated from the simulation engine and stored in the SQLite database.")
 
-#analytics summary page
+# -----------------------------
+# ANALYTICS SUMMARY PAGE
+# -----------------------------
 elif page == "Analytics Summary":
     st.header("📊 Analytics Summary")
 
+    summary = get_summary()
+
+    # Top metrics
     col1, col2, col3 = st.columns(3)
-    col1.metric("Avg Travel Time (mins)", f"{average_travel_time()}")
-    col2.metric("Avg Delay (mins)", f"{average_delay():.2f}")
-    col3.metric("Delay Rate (%)", f"{delay_rate():.2f}%")
+    col1.metric("Avg Travel Time (mins)", round(summary["avg_travel_time"], 2))
+    col2.metric("Avg Delay (mins)", round(summary["avg_delay"], 2))
+    col3.metric("Delay Rate (%)", f"{round(summary['delay_rate'], 2)}%")
 
     st.subheader("🚚 Route & Delivery Insights")
-    busiest = get_busiest_route()[0]
-    fastest = fastest_delivery()[0]
-    slowest = slowest_delivery()[0]
-    st.write(f"**Busiest Route:** {busiest[0]} ({busiest[1]} deliveries)")
-    st.write(f"**Fastest Delivery:** ID {fastest[0]} — {fastest[1]:.2f} mins")
-    st.write(f"**Slowest Delivery:** ID {slowest[0]} — {slowest[1]:.2f} mins")
+
+    busiest = summary["busiest_route"]
+    st.write(f"**Busiest Route:** {busiest['route']} ({busiest['count']} deliveries)")
+
+    fastest = summary["fastest_delivery"]
+    st.write(f"**Fastest Delivery:** ID {fastest['delivery_id']} — {round(fastest['travel_time_minutes'], 2)} mins")
+
+    slowest = summary["slowest_delivery"]
+    st.write(f"**Slowest Delivery:** ID {slowest['delivery_id']} — {round(slowest['travel_time_minutes'], 2)} mins")
 
     st.subheader("🧑‍🔧 Driver Performance (Avg Travel Time)")
 
-    driver_stats = get_driver_performace()
+    df = pd.DataFrame(summary["driver_performance"])
+    df["travel_time_minutes"] = df["travel_time_minutes"].round(2)
 
-    # Convert to a DataFrame
-    df = pd.DataFrame(driver_stats, columns=["Driver ID", "Avg Travel Time (mins)"])
-    # print(df)
-    # Proper formatting (2 decimal places)
-    df["Avg Travel Time (mins)"] = df["Avg Travel Time (mins)"].round(2)
+    st.dataframe(
+        df.style.highlight_min("travel_time_minutes", color="lightgreen")
+              .highlight_max("travel_time_minutes", color="pink")
+    )
 
-    # st.dataframe(df, use_container_width=True)
-    st.dataframe(df.style.highlight_min(subset=["Avg Travel Time (mins)"], color="lightgreen")
-                   .highlight_max(subset=["Avg Travel Time (mins)"], color="pink"))
 
-#visualiztion page
+# -----------------------------
+# VISUALIZATIONS PAGE
+# -----------------------------
 elif page == "Visualizations":
     st.header("📊 Visual Dashboard")
-    st.write("Explore delivery patterns with the plots below.")
-    figures = generate_all_plots()
-    st.pyplot(figures)
 
-else:
+    st.write("All visualizations below are generated live from API data.")
+
+    deliveries = get_all_deliveries()
+
+    if deliveries:
+        df = pd.DataFrame(deliveries)
+
+        import matplotlib.pyplot as plt
+
+        # Histogram
+        fig, ax = plt.subplots()
+        ax.hist(df["travel_time_minutes"], bins=10, edgecolor="black")
+        ax.set_title("Travel Time Distribution")
+        st.pyplot(fig)
+
+        # Delay Reason Bar Chart
+        fig, ax = plt.subplots()
+        delay_counts = df["delay_reason"].value_counts()
+        ax.bar(delay_counts.index, delay_counts.values)
+        ax.set_title("Delay Reason Frequency")
+        st.pyplot(fig)
+
+    else:
+        st.warning("No deliveries found.")
+
+
+# -----------------------------
+# RAW DATA PAGE
+# -----------------------------
+elif page == "Raw Data":
     st.header("📄 Raw Delivery Data")
-    st.write("Below is the full dataset from the SQLite database")
-    data = load_deliveries()
-    df = pd.DataFrame(data, columns = ["delivery_id", "driver_id", "route_type", "distance", "start_time", 
-    "travel_time_minutes", "delay_minutes", "delay_reason", "end_time"])
-    st.dataframe(df, use_container_width = True)
 
-    #create download buttons for csv
-    csv_data = df.to_csv(index = False)
-    st.download_button(label = "Download CSV",
-                        data = csv_data,
-                        file_name = "deliveries.csv",
-                        mime = "text/csv")
+    deliveries = get_all_deliveries()
+    df = pd.DataFrame(deliveries)
 
-    #create download buttons for csv
-    excel_data = io.BytesIO()
-    df.to_excel(excel_data, index = False, engine="xlsxwriter")
-    excel_data.seek(0)
-    st.download_button(label = "Download excel",
-                        data = excel_data,
-                        file_name = "deliveries.xlsx",
-                        mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    st.dataframe(df, use_container_width=True)
 
-    #create download buttons for json
+    # CSV download
+    csv_data = df.to_csv(index=False)
+    st.download_button("Download CSV", csv_data, "deliveries.csv", "text/csv")
 
+    # Excel download
+    excel_buffer = io.BytesIO()
+    df.to_excel(excel_buffer, index=False, engine="xlsxwriter")
+    excel_buffer.seek(0)
+    st.download_button(
+        "Download Excel", 
+        excel_buffer, 
+        "deliveries.xlsx", 
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    # JSON download
     json_data = df.to_json()
-    st.download_button(label = "Download json",
-                        data = json_data,
-                        file_name = "deliveries.json",
-                        mime = "application/json")
+    st.download_button("Download JSON", json_data, "deliveries.json", "application/json")
+
+
+# -----------------------------
+# SIMULATE NEW DELIVERY PAGE
+# -----------------------------
+elif page == "Simulate Delivery":
+    st.header("🚀 Generate New Delivery")
+
+    st.write("Trigger the simulation engine to create one new delivery and save it to the database.")
+
+    if st.button("Generate Delivery"):
+        response = simulate_new_delivery()
+        st.success("New delivery generated successfully!")
+        st.json(response)
+
+# ---------------------------------
+# ADD FILTERS OPTION
+# ---------------------------------
+elif page == "Filters":
+    st.header("🔍 Filter Deliveries")
+
+    st.write("Use the controls below to filter deliveries using the API.")
+
+    # ---inputs----
+    driver_id = st.number_input("Driver ID (optional)", min_value=1, max_value=20, step=1, value=1)
+    apply_driver = st.checkbox("Filter by Driver ID", value=False)
+
+    route_type = st.selectbox(
+        "Route Type (optional)",
+        ["", "city_center", "suburbs", "industrial", "rural"]
+    )
+
+    min_time = st.number_input("Min Travel Time (mins)", min_value=0.0, value=0.0)
+    max_time = st.number_input("Max Travel Time (mins)", min_value=0.0, value=0.0)
+
+    if st.button("Apply Filters"):
+        with st.spinner("Fetching filtered results..."):
+            result = filter_deliveries(
+                driver_id=driver_id if apply_driver else None,
+                route_type=route_type if route_type != "" else None,
+                min_time=min_time if min_time > 0 else None,
+                max_time=max_time if max_time > 0 else None
+            )
+
+        if not result:
+            st.warning("No deliveries found with selected filters.")
+        else:
+            df = pd.DataFrame(result)
+            st.success(f"Found {len(df)} matching deliveries.")
+            st.dataframe(df, use_container_width=True)
+
+            import matplotlib.pyplot as plt
+
+            # -------------------- TRAVEL TIME HISTOGRAM --------------------
+            st.subheader("⏱ Travel Time Distribution")
+            fig1, ax1 = plt.subplots()
+            ax1.hist(df["travel_time_minutes"], bins=10, edgecolor="black")
+            ax1.set_xlabel("Travel Time (mins)")
+            ax1.set_ylabel("Count")
+            st.pyplot(fig1)
+
+            # -------------------- DELAY REASON BAR CHART --------------------
+            st.subheader("⚠ Delay Reason Frequency")
+            if df["delay_reason"].notna().any():
+                fig2, ax2 = plt.subplots()
+                delay_counts = df["delay_reason"].value_counts()
+                ax2.bar(delay_counts.index, delay_counts.values)
+                ax2.set_ylabel("Count")
+                st.pyplot(fig2)
+            else:
+                st.info("No delays in filtered results.")
+
+            # -------------------- ROUTE TYPE PIE CHART --------------------
+            st.subheader("🛣 Route Type Breakdown")
+            fig3, ax3 = plt.subplots()
+            route_counts = df["route_type"].value_counts()
+            ax3.pie(route_counts.values, labels=route_counts.index, autopct="%1.1f%%")
+            st.pyplot(fig3)
+
+# ----------------------------
+# Batch simulation 
+# --------------------------------
+
+elif page == "Batch Simulation":
+    st.header("🚀 Run Batch Simulation")
+    count = st.slider("Number of deliveries to generate:", 10, 500, 50)
+
+    if st.button("Run Batch Simulation"):
+        response = simulate_batch(count)
+        st.success(f"{response['total']} deliveries generated!")
+        st.json(response)
