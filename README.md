@@ -178,7 +178,12 @@ Access:
 
 -   Backend and frontend are Dockerized
 -   Designed for deployment on Render / Railway / Azure
--   Cloud URLs will be added after deployment
+
+------------------------------------------------------------------------
+
+## Live Demo:
+-  API: https://city-logistics-api.onrender.com
+-  UI: https://city-logistics-ui.onrender.com
 
 ------------------------------------------------------------------------
 
