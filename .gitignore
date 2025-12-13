@@ -1,5 +1,3 @@
-/simulation/data/*.db
-
 # Python cache
 __pycache__/
 *.pyc
@@ -15,13 +13,11 @@ env/
 
 # OS files
 .DS_Store
-Thumbs.db
-
-# Databases
-*.sqlite
-*.db
 
 # Experiments or scratch files
 experiments/
 tests/
 scratch.py
+
+# Env files
+.env
