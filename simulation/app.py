@@ -44,7 +44,14 @@ if page == "Home":
 elif page == "Analytics Summary":
     st.header("📊 Analytics Summary")
 
-    summary = get_summary()
+    with st.spinner("Connecting to backend…"):
+        wake_backend()
+
+        try:
+            summary = get_summary()
+        except BackendUnavailable:
+            st.warning("⏳ Backend is waking up. Please wait 10–15 seconds and refresh.")
+            st.stop()
 
     # Top metrics
     col1, col2, col3 = st.columns(3)

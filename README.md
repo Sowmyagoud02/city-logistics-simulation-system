@@ -182,7 +182,7 @@ Access:
 ------------------------------------------------------------------------
 
 ## Live Demo:
--  API: https://city-logistics-api.onrender.com
+-  API: https://city-logistics-api.onrender.com/docs
 -  UI: https://city-logistics-ui.onrender.com
 
 ------------------------------------------------------------------------
