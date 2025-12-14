@@ -10,7 +10,9 @@ from api_client.client import (
     get_deliveries_by_driver,
     simulate_new_delivery,
     filter_deliveries,
-    simulate_batch
+    simulate_batch,
+    wake_backend,
+    BackendUnavailable
 )
 
 st.title("City Logistics Simulation Dashboard")

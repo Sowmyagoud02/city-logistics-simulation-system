@@ -1,8 +1,14 @@
 import requests
 import os
+import time
 
 BASE_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
 TIMEOUT = 10
+
+
+class BackendUnavailable(Exception):
+    pass
+
 
 def safe_request(method, endpoint, **kwargs):
     try:
