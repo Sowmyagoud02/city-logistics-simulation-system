@@ -46,14 +46,22 @@ if page == "Home":
 elif page == "Analytics Summary":
     st.header("📊 Analytics Summary")
 
-    with st.spinner("Connecting to backend…"):
-        wake_backend()
+    if "backend_ready" not in st.session_state:
+        st.session_state.backend_ready = False
 
-        try:
-            summary = get_summary()
-        except BackendUnavailable:
-            st.warning("⏳ Backend is waking up. Please wait 10–15 seconds and refresh.")
-            st.stop()
+    if not st.session_state.backend_ready:
+        with st.spinner("Waking backend (first load may take ~30 seconds)..."):
+            wake_backend()
+            try:
+                summary = get_summary()
+                st.session_state.backend_ready = True
+            except BackendUnavailable:
+                st.warning("⏳ Backend is starting. Please wait a few seconds.")
+                if st.button("🔁 Retry"):
+                    st.rerun()
+                st.stop()
+    else:
+        summary = get_summary()
 
     # Top metrics
     col1, col2, col3 = st.columns(3)

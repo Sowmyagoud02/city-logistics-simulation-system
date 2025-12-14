@@ -7,40 +7,51 @@ TIMEOUT = 10
 
 
 class BackendUnavailable(Exception):
+    """Raised when backend is not reachable or not ready"""
     pass
 
 
-def safe_request(method, endpoint, **kwargs):
-    try:
-        response = requests.request(
-            method,
-            f"{BASE_URL}{endpoint}",
-            timeout=TIMEOUT,
-            **kwargs
-        )
+def safe_request(method, endpoint, retries=3, wait=5, **kwargs):
+    """
+    Makes a safe API request with retries.
+    Handles Render cold-starts gracefully.
+    """
+    for attempt in range(retries):
+        try:
+            response = requests.request(
+                method,
+                f"{BASE_URL}{endpoint}",
+                timeout=TIMEOUT,
+                **kwargs
+            )
 
-        if response.status_code != 200:
-            raise BackendUnavailable("Backend not ready")
+            if response.status_code != 200:
+                raise BackendUnavailable("Backend not ready")
 
-        if not response.text.strip():
-            raise BackendUnavailable("Empty response from backend")
+            if not response.text.strip():
+                raise BackendUnavailable("Empty response")
 
-        return response.json()
+            return response.json()
 
-    except requests.exceptions.RequestException:
-        raise BackendUnavailable("Backend unreachable")
-    except ValueError:
-        raise BackendUnavailable("Invalid JSON from backend")
+        except (requests.exceptions.RequestException, ValueError):
+            if attempt < retries - 1:
+                time.sleep(wait)
+            else:
+                raise BackendUnavailable("Backend unreachable after retries")
 
 
 def wake_backend():
-    """Ping backend to wake it up"""
+    """
+    Ping backend to wake Render free-tier instance.
+    No sleep here — retries are handled elsewhere.
+    """
     try:
         requests.get(f"{BASE_URL}/healthz", timeout=5)
-        time.sleep(2)  # give backend time to wake
     except:
         pass
 
+
+# ---------------- API FUNCTIONS ----------------
 
 def get_summary():
     return safe_request("GET", "/deliveries/summary")
