@@ -11,12 +11,31 @@ from api_client.client import (
     simulate_new_delivery,
     filter_deliveries,
     simulate_batch,
-    wake_backend,
-    BackendUnavailable
+    wake_backend
 )
 
-st.title("City Logistics Simulation Dashboard")
-page = st.sidebar.selectbox("Navigation", ["Home", "Analytics Summary", "Visualizations", "Raw Data", "Simulate Delivery", "Filters","Batch Simulation"])
+st.set_page_config(page_title="City Logistics Simulation Dashboard", layout="wide")
+st.title("🚚 City Logistics Simulation Dashboard")
+
+# ---------------- GLOBAL BACKEND CHECK ----------------
+if "backend_ready" not in st.session_state:
+    st.session_state.backend_ready = False
+
+if not st.session_state.backend_ready:
+    with st.spinner("Waking backend (first load may take ~30 seconds)..."):
+        wake_backend()
+        test = get_summary()
+        if test:
+            st.session_state.backend_ready = True
+        else:
+            st.warning("⏳ Backend is starting. Please wait a few seconds and refresh.")
+            st.stop()
+
+# ---------------- NAVIGATION ----------------
+page = st.sidebar.selectbox(
+    "Navigation",
+    ["Home", "Analytics Summary", "Visualizations", "Raw Data", "Simulate Delivery", "Filters", "Batch Simulation"]
+)
 
 # -----------------------------
 # HOME PAGE
@@ -25,8 +44,9 @@ if page == "Home":
     st.header("📦 Welcome to the City Logistics Simulation System")
 
     st.write("""
-    This dashboard is powered by a real API connected to a discrete-event simulation.
-    Explore performance, delays, routes, and driver statistics generated dynamically.
+    This dashboard connects to a live simulation backend.
+    It visualizes delivery performance, delays, routes, and driver efficiency
+    generated using a discrete-event simulation engine.
     """)
 
     st.subheader("✨ What You Can Do Here")
@@ -46,22 +66,10 @@ if page == "Home":
 elif page == "Analytics Summary":
     st.header("📊 Analytics Summary")
 
-    if "backend_ready" not in st.session_state:
-        st.session_state.backend_ready = False
-
-    if not st.session_state.backend_ready:
-        with st.spinner("Waking backend (first load may take ~30 seconds)..."):
-            wake_backend()
-            try:
-                summary = get_summary()
-                st.session_state.backend_ready = True
-            except BackendUnavailable:
-                st.warning("⏳ Backend is starting. Please wait a few seconds.")
-                if st.button("🔁 Retry"):
-                    st.rerun()
-                st.stop()
-    else:
-        summary = get_summary()
+    summary = get_summary()
+    if summary is None:
+        st.warning("Backend still waking up. Please refresh.")
+        st.stop()
 
     # Top metrics
     col1, col2, col3 = st.columns(3)
@@ -100,6 +108,9 @@ elif page == "Visualizations":
     st.write("All visualizations below are generated live from API data.")
 
     deliveries = get_all_deliveries()
+    if deliveries is None:
+        st.warning("Backend still waking up. Please refresh.")
+        st.stop()
 
     if deliveries:
         df = pd.DataFrame(deliveries)
@@ -118,7 +129,6 @@ elif page == "Visualizations":
         ax.bar(delay_counts.index, delay_counts.values)
         ax.set_title("Delay Reason Frequency")
         st.pyplot(fig)
-
     else:
         st.warning("No deliveries found.")
 
@@ -130,6 +140,9 @@ elif page == "Raw Data":
     st.header("📄 Raw Delivery Data")
 
     deliveries = get_all_deliveries()
+    if deliveries is None:
+        st.warning("Backend still waking up. Please refresh.")
+        st.stop()
     df = pd.DataFrame(deliveries)
 
     st.dataframe(df, use_container_width=True)
@@ -164,8 +177,11 @@ elif page == "Simulate Delivery":
 
     if st.button("Generate Delivery"):
         response = simulate_new_delivery()
-        st.success("New delivery generated successfully!")
-        st.json(response)
+        if response:
+            st.success("Delivery created!")
+            st.json(response)
+        else:
+            st.warning("Backend busy. Try again.")
 
 # ---------------------------------
 # ADD FILTERS OPTION
@@ -188,13 +204,16 @@ elif page == "Filters":
     max_time = st.number_input("Max Travel Time (mins)", min_value=0.0, value=0.0)
 
     if st.button("Apply Filters"):
-        with st.spinner("Fetching filtered results..."):
-            result = filter_deliveries(
-                driver_id=driver_id if apply_driver else None,
-                route_type=route_type if route_type != "" else None,
-                min_time=min_time if min_time > 0 else None,
-                max_time=max_time if max_time > 0 else None
-            )
+        result = filter_deliveries(
+            driver_id=driver_id if apply_driver else None,
+            route_type=route_type if route_type != "" else None,
+            min_time=min_time if min_time > 0 else None,
+            max_time=max_time if max_time > 0 else None
+        )
+
+        if result is None:
+            st.warning("Backend still waking up.")
+            st.stop()
 
         if not result:
             st.warning("No deliveries found with selected filters.")
@@ -241,5 +260,7 @@ elif page == "Batch Simulation":
 
     if st.button("Run Batch Simulation"):
         response = simulate_batch(count)
-        st.success(f"{response['total']} deliveries generated!")
-        st.json(response)
+        if response:
+            st.success(f"{response['total']} deliveries generated!")
+        else:
+            st.warning("Backend busy. Try again later.")

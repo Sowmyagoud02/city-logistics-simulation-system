@@ -7,14 +7,15 @@ TIMEOUT = 10
 
 
 class BackendUnavailable(Exception):
-    """Raised when backend is not reachable or not ready"""
+    """Raised when backend is sleeping or unreachable"""
     pass
 
 
-def safe_request(method, endpoint, retries=3, wait=5, **kwargs):
+def safe_request(method, endpoint, retries=5, wait=6, **kwargs):
     """
     Makes a safe API request with retries.
-    Handles Render cold-starts gracefully.
+    Designed to handle Render free-tier cold starts.
+    Returns None instead of crashing the UI.
     """
     for attempt in range(retries):
         try:
@@ -26,24 +27,24 @@ def safe_request(method, endpoint, retries=3, wait=5, **kwargs):
             )
 
             if response.status_code != 200:
-                raise BackendUnavailable("Backend not ready")
+                raise ValueError("Backend not ready")
 
             if not response.text.strip():
-                raise BackendUnavailable("Empty response")
+                raise ValueError("Empty response")
 
             return response.json()
 
-        except (requests.exceptions.RequestException, ValueError):
+        except Exception:
             if attempt < retries - 1:
                 time.sleep(wait)
             else:
-                raise BackendUnavailable("Backend unreachable after retries")
+                return None
 
 
 def wake_backend():
     """
-    Ping backend to wake Render free-tier instance.
-    No sleep here — retries are handled elsewhere.
+    Ping backend to wake Render instance.
+    Non-blocking by design.
     """
     try:
         requests.get(f"{BASE_URL}/healthz", timeout=5)
