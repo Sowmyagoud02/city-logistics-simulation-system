@@ -5,17 +5,10 @@ import time
 BASE_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
 TIMEOUT = 10
 
-
-class BackendUnavailable(Exception):
-    """Raised when backend is sleeping or unreachable"""
-    pass
-
-
 def safe_request(method, endpoint, retries=5, wait=6, **kwargs):
     """
-    Makes a safe API request with retries.
-    Designed to handle Render free-tier cold starts.
-    Returns None instead of crashing the UI.
+    Safe API call.
+    Returns None if backend is sleeping/unavailable.
     """
     for attempt in range(retries):
         try:
@@ -43,8 +36,7 @@ def safe_request(method, endpoint, retries=5, wait=6, **kwargs):
 
 def wake_backend():
     """
-    Ping backend to wake Render instance.
-    Non-blocking by design.
+    Ping backend to wake Render free-tier
     """
     try:
         requests.get(f"{BASE_URL}/healthz", timeout=5)

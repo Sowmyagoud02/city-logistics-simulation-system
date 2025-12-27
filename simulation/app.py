@@ -17,20 +17,6 @@ from api_client.client import (
 st.set_page_config(page_title="City Logistics Simulation Dashboard", layout="wide")
 st.title("🚚 City Logistics Simulation Dashboard")
 
-# ---------------- GLOBAL BACKEND CHECK ----------------
-if "backend_ready" not in st.session_state:
-    st.session_state.backend_ready = False
-
-if not st.session_state.backend_ready:
-    with st.spinner("Waking backend (first load may take ~30 seconds)..."):
-        wake_backend()
-        test = get_summary()
-        if test:
-            st.session_state.backend_ready = True
-        else:
-            st.warning("⏳ Backend is starting. Please wait a few seconds and refresh.")
-            st.stop()
-
 # ---------------- NAVIGATION ----------------
 page = st.sidebar.selectbox(
     "Navigation",
@@ -47,7 +33,12 @@ if page == "Home":
     This dashboard connects to a live simulation backend.
     It visualizes delivery performance, delays, routes, and driver efficiency
     generated using a discrete-event simulation engine.
+
+    ⚠️ Note: The backend runs on Render free tier and may take
+    **10–30 seconds** to wake up on first access.
     """)
+
+    st.info("If a page shows 'backend waking up', simply refresh once.")
 
     st.subheader("✨ What You Can Do Here")
     st.markdown("""
@@ -65,38 +56,37 @@ if page == "Home":
 # -----------------------------
 elif page == "Analytics Summary":
     st.header("📊 Analytics Summary")
-
+    wake_backend()
     summary = get_summary()
     if summary is None:
-        st.warning("Backend still waking up. Please refresh.")
-        st.stop()
+        st.warning("⏳ Backend is waking up. Please refresh in a few seconds.")
+    else:
+        # Top metrics
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Avg Travel Time (mins)", round(summary["avg_travel_time"], 2))
+        col2.metric("Avg Delay (mins)", round(summary["avg_delay"], 2))
+        col3.metric("Delay Rate (%)", f"{round(summary['delay_rate'], 2)}%")
 
-    # Top metrics
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Avg Travel Time (mins)", round(summary["avg_travel_time"], 2))
-    col2.metric("Avg Delay (mins)", round(summary["avg_delay"], 2))
-    col3.metric("Delay Rate (%)", f"{round(summary['delay_rate'], 2)}%")
+        st.subheader("🚚 Route & Delivery Insights")
 
-    st.subheader("🚚 Route & Delivery Insights")
+        busiest = summary["busiest_route"]
+        st.write(f"**Busiest Route:** {busiest['route']} ({busiest['count']} deliveries)")
 
-    busiest = summary["busiest_route"]
-    st.write(f"**Busiest Route:** {busiest['route']} ({busiest['count']} deliveries)")
+        fastest = summary["fastest_delivery"]
+        st.write(f"**Fastest Delivery:** ID {fastest['delivery_id']} — {round(fastest['travel_time_minutes'], 2)} mins")
 
-    fastest = summary["fastest_delivery"]
-    st.write(f"**Fastest Delivery:** ID {fastest['delivery_id']} — {round(fastest['travel_time_minutes'], 2)} mins")
+        slowest = summary["slowest_delivery"]
+        st.write(f"**Slowest Delivery:** ID {slowest['delivery_id']} — {round(slowest['travel_time_minutes'], 2)} mins")
 
-    slowest = summary["slowest_delivery"]
-    st.write(f"**Slowest Delivery:** ID {slowest['delivery_id']} — {round(slowest['travel_time_minutes'], 2)} mins")
+        st.subheader("🧑‍🔧 Driver Performance (Avg Travel Time)")
 
-    st.subheader("🧑‍🔧 Driver Performance (Avg Travel Time)")
+        df = pd.DataFrame(summary["driver_performance"])
+        df["travel_time_minutes"] = df["travel_time_minutes"].round(2)
 
-    df = pd.DataFrame(summary["driver_performance"])
-    df["travel_time_minutes"] = df["travel_time_minutes"].round(2)
-
-    st.dataframe(
-        df.style.highlight_min("travel_time_minutes", color="lightgreen")
-              .highlight_max("travel_time_minutes", color="pink")
-    )
+        st.dataframe(
+            df.style.highlight_min("travel_time_minutes", color="lightgreen")
+                .highlight_max("travel_time_minutes", color="pink")
+        )
 
 
 # -----------------------------
@@ -106,11 +96,10 @@ elif page == "Visualizations":
     st.header("📊 Visual Dashboard")
 
     st.write("All visualizations below are generated live from API data.")
-
+    wake_backend()
     deliveries = get_all_deliveries()
     if deliveries is None:
-        st.warning("Backend still waking up. Please refresh.")
-        st.stop()
+        st.warning("⏳ Backend is waking up. Please refresh.")
 
     if deliveries:
         df = pd.DataFrame(deliveries)
@@ -141,30 +130,30 @@ elif page == "Raw Data":
 
     deliveries = get_all_deliveries()
     if deliveries is None:
-        st.warning("Backend still waking up. Please refresh.")
-        st.stop()
-    df = pd.DataFrame(deliveries)
+        st.warning("⏳ Backend is waking up. Please refresh.")
+    else:
+        df = pd.DataFrame(deliveries)
 
-    st.dataframe(df, use_container_width=True)
+        st.dataframe(df, use_container_width=True)
 
-    # CSV download
-    csv_data = df.to_csv(index=False)
-    st.download_button("Download CSV", csv_data, "deliveries.csv", "text/csv")
+        # CSV download
+        csv_data = df.to_csv(index=False)
+        st.download_button("Download CSV", csv_data, "deliveries.csv", "text/csv")
 
-    # Excel download
-    excel_buffer = io.BytesIO()
-    df.to_excel(excel_buffer, index=False, engine="xlsxwriter")
-    excel_buffer.seek(0)
-    st.download_button(
-        "Download Excel", 
-        excel_buffer, 
-        "deliveries.xlsx", 
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+        # Excel download
+        excel_buffer = io.BytesIO()
+        df.to_excel(excel_buffer, index=False, engine="xlsxwriter")
+        excel_buffer.seek(0)
+        st.download_button(
+            "Download Excel", 
+            excel_buffer, 
+            "deliveries.xlsx", 
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
-    # JSON download
-    json_data = df.to_json()
-    st.download_button("Download JSON", json_data, "deliveries.json", "application/json")
+        # JSON download
+        json_data = df.to_json()
+        st.download_button("Download JSON", json_data, "deliveries.json", "application/json")
 
 
 # -----------------------------
@@ -213,7 +202,6 @@ elif page == "Filters":
 
         if result is None:
             st.warning("Backend still waking up.")
-            st.stop()
 
         if not result:
             st.warning("No deliveries found with selected filters.")

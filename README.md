@@ -18,22 +18,22 @@ development, data analytics, and cloud deployment skills**.
 
 ## ⭐ Key Features
 
-- ✔ Simulates **50+ realistic deliveries** with drivers, routes, delays,
+- Simulates **50+ realistic deliveries** with drivers, routes, delays,
 timing & distances
-- ✔ Probabilistic modeling of **traffic, breaks, weather & roadblocks**
-- ✔ Stores simulation output in **SQLite database**
-- ✔ Computes rich analytics: - Average travel time
+- Probabilistic modeling of **traffic, breaks, weather & roadblocks**
+- Stores simulation output in **SQLite database**
+- Computes rich analytics: - Average travel time
     - Average delay
     - Delay rate (%)
     - Busiest route
     - Fastest & slowest deliveries
     - Driver performance metrics
 
-- ✔ **REST API (FastAPI)** to query & mutate simulation data
-- ✔ **Streamlit dashboard** connected to live API data
-- ✔ Interactive filtering, visualization & data downloads
-- ✔ **Docker-ready** for cloud deployment
-- ✔ Clean, modular & extensible architecture
+- **REST API (FastAPI)** to query & mutate simulation data
+- **Streamlit dashboard** connected to live API data
+- Interactive filtering, visualization & data downloads
+- **Docker-ready** for cloud deployment
+- Clean, modular & extensible architecture
 
 ------------------------------------------------------------------------
 
@@ -88,13 +88,13 @@ making it efficient and realistic.
 
 ## 📊 Analytics Generated
 
-- ✔ Average Travel Time
-- ✔ Average Delay
-- ✔ Delay Rate (%)
-- ✔ Busiest Route
-- ✔ Fastest Delivery
-- ✔ Slowest Delivery
-- ✔ Driver Performance Table
+- Average Travel Time
+- Average Delay
+- Delay Rate (%)
+- Busiest Route
+- Fastest Delivery
+- Slowest Delivery
+- Driver Performance Table
 
 All analytics are exposed via **FastAPI endpoints** and consumed by the
 frontend.
