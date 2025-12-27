@@ -1,3 +1,5 @@
+![City Logistics Simulation Cover](images/cover_photo.png)
+
 # 🚚 City Logistics Simulation System
 
 **A Full-Stack Simulation & Analytics Platform for Last-Mile Delivery
@@ -195,6 +197,18 @@ Access:
 -   Real-time simulation controls
 -   ML-based delivery time prediction
 -   Event streaming with Kafka
+
+------------------------------------------------------------------------
+
+## ⚙️ Backend (FastAPI)
+
+![Backend Architecture](images/backend.png)
+
+------------------------------------------------------------------------
+
+## 📈 Visualization Dashboard (Streamlit)
+
+![Streamlit Dashboard](images/frontend.png)
 
 ------------------------------------------------------------------------
 
