@@ -67,6 +67,12 @@ timing & distances
 ```
 ------------------------------------------------------------------------
 
+## 🧱 Project Architecture
+
+![System Architecture](images/architecture.png)
+
+------------------------------------------------------------------------
+
 ## 🧪 Simulation Overview (Discrete-Event Simulation)
 
 The system advances **event-to-event** instead of second-by-second,
@@ -189,17 +195,6 @@ Access:
 
 ------------------------------------------------------------------------
 
-## 🔮 Future Enhancements
-
--   PostgreSQL database
--   Authentication & user roles
--   Time-series analytics
--   Real-time simulation controls
--   ML-based delivery time prediction
--   Event streaming with Kafka
-
-------------------------------------------------------------------------
-
 ## ⚙️ Backend (FastAPI)
 
 ![Backend Architecture](images/backend.png)
@@ -209,6 +204,17 @@ Access:
 ## 📈 Visualization Dashboard (Streamlit)
 
 ![Streamlit Dashboard](images/frontend.png)
+
+------------------------------------------------------------------------
+
+## 🔮 Future Enhancements
+
+-   PostgreSQL database
+-   Authentication & user roles
+-   Time-series analytics
+-   Real-time simulation controls
+-   ML-based delivery time prediction
+-   Event streaming with Kafka
 
 ------------------------------------------------------------------------
 
@@ -222,3 +228,4 @@ Master's in Digital Engineering - OVGU Magdeburg
 - Backend & API Development
 - Data Engineering
 - Cloud Deployment
+- Aritificial Intelligence
